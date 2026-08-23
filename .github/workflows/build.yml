@@ -439,7 +439,7 @@ jobs:
         compression_level: 9
         github_token: ${{ secrets.MY_GITHUB_TOKEN }}
 
-       - name: Build rtl8192eu Module
+    - name: Build rtl8192eu Module
       run: |
         set -e
         KSRC="${{ github.workspace }}/kernel/common"
