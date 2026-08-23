@@ -445,6 +445,16 @@ jobs:
         KSRC="${{ github.workspace }}/kernel/common"
         KOUT="/home/runner/out"
 
+        # Find Module.symvers in common output directory
+        if [ -f "/home/runner/out/common/Module.symvers" ]; then
+          KOUT="/home/runner/out/common"
+        elif [ -f "/home/runner/out/Module.symvers" ]; then
+          KOUT="/home/runner/out"
+        else
+          echo "Module.symvers not found in expected locations" >&2
+          exit 1
+        fi
+
         # Sanity check - Module.symvers must exist from the kernel build
         if [ ! -f "${KOUT}/Module.symvers" ]; then
           echo "Module.symvers not found, searching..."
