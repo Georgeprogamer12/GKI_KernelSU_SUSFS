@@ -485,6 +485,11 @@ jobs:
         if-no-files-found: error
         compression-level: 9
 
+    - name: Build rtl8192eu Module
+      if: ${{ inputs.version == 'android13-5.15' }}
+      run: |
+        set -e
+
     - name: Build Bypass Kernel
       if: ${{ inputs.build_bypass }}
       env:
