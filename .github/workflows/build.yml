@@ -439,6 +439,51 @@ jobs:
         compression_level: 9
         github_token: ${{ secrets.MY_GITHUB_TOKEN }}
 
+    - name: Build rtl8192eu Module
+      run: |
+        set -e
+        KSRC="${{ github.workspace }}/kernel/common"
+        KOUT="/home/runner/out"
+
+        # Sanity check - Module.symvers must exist from the kernel build
+        if [ ! -f "${KOUT}/Module.symvers" ]; then
+          echo "Module.symvers not found, searching..."
+          find /home/runner/out -name "Module.symvers" 2>/dev/null | head -5
+          exit 1
+        fi
+
+        # Clone clnhub's patched driver (monitor mode + injection support)
+        git clone https://github.com/clnhub/rtl8192eu-linux \
+          "${{ github.workspace }}/rtl8192eu-linux"
+
+        # Copy Module.symvers into driver dir so vermagic is generated correctly
+        cp "${KOUT}/Module.symvers" "${{ github.workspace }}/rtl8192eu-linux/"
+
+        # Build using the same clang/LLVM already in PATH from setup-build-environment
+        make \
+          -C "${KOUT}" \
+          ARCH=arm64 \
+          CROSS_COMPILE=aarch64-linux-gnu- \
+          LLVM=1 \
+          LLVM_IAS=1 \
+          M="${{ github.workspace }}/rtl8192eu-linux" \
+          modules
+
+        mkdir -p "${{ github.workspace }}/rtl8192eu-output"
+        find "${{ github.workspace }}/rtl8192eu-linux" -name "*.ko" \
+          -exec cp {} "${{ github.workspace }}/rtl8192eu-output/" \;
+
+        echo "--- Built modules ---"
+        ls -la "${{ github.workspace }}/rtl8192eu-output/"
+
+    - name: Upload rtl8192eu.ko
+      uses: actions/upload-artifact@v7
+      with:
+        name: rtl8192eu-android13-5.15
+        path: ${{ github.workspace }}/rtl8192eu-output/
+        if-no-files-found: error
+        compression-level: 9
+
     - name: Build Bypass Kernel
       if: ${{ inputs.build_bypass }}
       env:
