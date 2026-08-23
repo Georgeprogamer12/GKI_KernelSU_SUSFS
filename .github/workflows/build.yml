@@ -461,7 +461,8 @@ jobs:
 
         # Build using the same clang/LLVM already in PATH from setup-build-environment
         make \
-          -C "${KOUT}" \
+          -C "${KSRC}" \
+          O="${KOUT}" \
           ARCH=arm64 \
           CROSS_COMPILE=aarch64-linux-gnu- \
           LLVM=1 \
