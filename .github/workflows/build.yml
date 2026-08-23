@@ -439,7 +439,7 @@ jobs:
         compression_level: 9
         github_token: ${{ secrets.MY_GITHUB_TOKEN }}
 
-    - name: Build rtl8192eu Module
+       - name: Build rtl8192eu Module
       run: |
         set -e
         KSRC="${{ github.workspace }}/kernel/common"
@@ -452,13 +452,6 @@ jobs:
           KOUT="/home/runner/out"
         else
           echo "Module.symvers not found in expected locations" >&2
-          exit 1
-        fi
-
-        # Sanity check - Module.symvers must exist from the kernel build
-        if [ ! -f "${KOUT}/Module.symvers" ]; then
-          echo "Module.symvers not found, searching..."
-          find /home/runner/out -name "Module.symvers" 2>/dev/null | head -5
           exit 1
         fi
 
