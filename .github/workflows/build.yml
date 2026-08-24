@@ -439,6 +439,9 @@ jobs:
         compression_level: 9
         github_token: ${{ secrets.MY_GITHUB_TOKEN }}
 
+    - name: Clone rtl8192eu driver
+      run: git clone https://github.com/clnhub/rtl8192eu-linux
+
     - name: Build rtl8192eu Module
       if: ${{ inputs.android_version == 'android13' && inputs.kernel_version == '5.15' && inputs.sublevel == '180' }}
       run: |
