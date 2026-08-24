@@ -440,32 +440,24 @@ jobs:
         github_token: ${{ secrets.MY_GITHUB_TOKEN }}
 
     - name: Build rtl8192eu Module
+      if: ${{ inputs.version == 'android13-5.15' }}
       run: |
         set -e
         KSRC="${{ github.workspace }}/kernel/common"
-        KOUT="/home/runner/out"
+        KOUT="/home/runner/out/common"   # ← was /home/runner/out, now /home/runner/out/common
 
-        # Cache bust: Ensure new module resolution logic is used
-        # Find Module.symvers in common output directory
-        
-        # Find Module.symvers in common output directory
-        if [ -f "/home/runner/out/common/Module.symvers" ]; then
-          KOUT="/home/runner/out/common"
-        elif [ -f "/home/runner/out/Module.symvers" ]; then
-          KOUT="/home/runner/out"
-        else
-          echo "Module.symvers not found in expected locations" >&2
+        # Sanity check
+        if [ ! -f "${KOUT}/Module.symvers" ]; then
+          echo "Module.symvers not found, searching..."
+          find /home/runner/out -name "Module.symvers" 2>/dev/null | head -5
           exit 1
         fi
 
-        # Clone clnhub's patched driver (monitor mode + injection support)
         git clone https://github.com/clnhub/rtl8192eu-linux \
           "${{ github.workspace }}/rtl8192eu-linux"
 
-        # Copy Module.symvers into driver dir so vermagic is generated correctly
         cp "${KOUT}/Module.symvers" "${{ github.workspace }}/rtl8192eu-linux/"
 
-        # Build using the same clang/LLVM already in PATH from setup-build-environment
         make \
           -C "${KSRC}" \
           O="${KOUT}" \
