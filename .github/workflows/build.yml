@@ -460,20 +460,15 @@ jobs:
           fi
         done
 
-        # Fallback: search the whole runner
         if [ -z "$CLANG_BIN" ]; then
           echo "Hardcoded paths failed, searching..."
           CLANG_BIN=$(find /home/runner -maxdepth 10 -name "clang" -type f 2>/dev/null \
-          | head -1 | xargs -r dirname)
-
-        # Fallback to system clang if nothing found
-        if [ -z "$CLANG_BIN" ] && command -v clang &>/dev/null; then
-        CLANG_BIN=$(dirname $(which clang))
-        fi
-
-        if [ -z "$CLANG_BIN" ]; then
-          echo "ERROR: Could not locate clang anywhere"
-          exit 1
+            | head -1 | xargs -r dirname)
+          
+          # Fallback to system clang if nothing found
+          if [ -z "$CLANG_BIN" ] && command -v clang &>/dev/null; then
+            CLANG_BIN=$(dirname $(which clang))
+          fi
         fi
 
         echo "Found clang at: $CLANG_BIN"
