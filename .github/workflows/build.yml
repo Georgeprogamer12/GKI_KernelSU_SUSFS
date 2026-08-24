@@ -440,7 +440,7 @@ jobs:
         github_token: ${{ secrets.MY_GITHUB_TOKEN }}
 
     - name: Build rtl8192eu Module
-      if: ${{ inputs.version == 'android13-5.15' }}
+      if: ${{ inputs.android_version == 'android13' && inputs.kernel_version == '5.15' && inputs.sublevel == '180' }}
       run: |
         set -e
 
