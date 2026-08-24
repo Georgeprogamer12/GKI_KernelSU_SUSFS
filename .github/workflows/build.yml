@@ -440,11 +440,22 @@ jobs:
         github_token: ${{ secrets.MY_GITHUB_TOKEN }}
 
     - name: Build rtl8192eu Module
-      if: ${{ inputs.android_version == 'android13' && inputs.kernel_version == '5.15' && inputs.sublevel == '180' }}
+      if: ${{ inputs.version == 'android13-5.15' }}
       run: |
         set -e
         KSRC="${{ github.workspace }}/kernel/common"
-        KOUT="/home/runner/out/common"   # ← was /home/runner/out, now /home/runner/out/common
+        KOUT="/home/runner/out/common"
+
+        # Find the clang that built the kernel and put it in PATH
+        CLANG_BIN=$(find /home/runner/work/GKI_KernelSU_SUSFS/GKI_KernelSU_SUSFS/kernel \
+          -name "clang" -type f 2>/dev/null | head -1 | xargs -r dirname)
+        if [ -z "$CLANG_BIN" ]; then
+          CLANG_BIN=$(find /home/runner -maxdepth 8 -name "clang" \
+            -type f 2>/dev/null | grep -v proc | head -1 | xargs -r dirname)
+        fi
+        echo "Found clang at: $CLANG_BIN"
+        export PATH="${CLANG_BIN}:${PATH}"
+        clang --version  # verify it's found
 
         # Sanity check
         if [ ! -f "${KOUT}/Module.symvers" ]; then
