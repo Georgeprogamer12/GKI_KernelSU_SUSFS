@@ -445,6 +445,9 @@ jobs:
         KSRC="${{ github.workspace }}/kernel/common"
         KOUT="/home/runner/out"
 
+        # Cache bust: Ensure new module resolution logic is used
+        # Find Module.symvers in common output directory
+        
         # Find Module.symvers in common output directory
         if [ -f "/home/runner/out/common/Module.symvers" ]; then
           KOUT="/home/runner/out/common"
