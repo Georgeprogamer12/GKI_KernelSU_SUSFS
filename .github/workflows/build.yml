@@ -443,19 +443,38 @@ jobs:
       if: ${{ inputs.version == 'android13-5.15' }}
       run: |
         set -e
+
         KSRC="${{ github.workspace }}/kernel/common"
         KOUT="/home/runner/out/common"
 
-        # Find the clang that built the kernel and put it in PATH
-        CLANG_BIN=$(find /home/runner/work/GKI_KernelSU_SUSFS/GKI_KernelSU_SUSFS/kernel \
-          -name "clang" -type f 2>/dev/null | head -1 | xargs -r dirname)
+        # Find clang used to build the kernel (r450784e)
+        echo "=== Locating clang ==="
+        CLANG_BIN=""
+        for candidate in \
+          "${{ github.workspace }}/kernel/prebuilts-master/ndk/prebuilts/clang/host/linux-x86/clang-r450784e/bin" \
+          "/home/runner/clang-r450784e/bin" \
+          "${{ github.workspace }}/clang-r450784e/bin"; do
+          if [ -f "${candidate}/clang" ]; then
+            CLANG_BIN="$candidate"
+            break
+          fi
+        done
+
+        # Fallback: search the whole runner
         if [ -z "$CLANG_BIN" ]; then
-          CLANG_BIN=$(find /home/runner -maxdepth 8 -name "clang" \
-            -type f 2>/dev/null | grep -v proc | head -1 | xargs -r dirname)
+          echo "Hardcoded paths failed, searching..."
+          CLANG_BIN=$(find /home/runner -maxdepth 10 -name "clang" -type f 2>/dev/null \
+            | grep -v '/usr/bin\|/proc' | head -1 | xargs -r dirname)
         fi
+
+        if [ -z "$CLANG_BIN" ]; then
+          echo "ERROR: Could not locate clang anywhere"
+          exit 1
+        fi
+
         echo "Found clang at: $CLANG_BIN"
         export PATH="${CLANG_BIN}:${PATH}"
-        clang --version  # verify it's found
+        clang --version
 
         # Sanity check
         if [ ! -f "${KOUT}/Module.symvers" ]; then
@@ -485,7 +504,6 @@ jobs:
 
         echo "--- Built modules ---"
         ls -la "${{ github.workspace }}/rtl8192eu-output/"
-
     - name: Upload rtl8192eu.ko
       if: ${{ inputs.android_version == 'android13' && inputs.kernel_version == '5.15' && inputs.sublevel == '180' }}
       uses: actions/upload-artifact@v7
