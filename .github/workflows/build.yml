@@ -440,7 +440,7 @@ jobs:
         github_token: ${{ secrets.MY_GITHUB_TOKEN }}
 
     - name: Build rtl8192eu Module
-      if: ${{ inputs.version == 'android13-5.15' }}
+      if: ${{ inputs.android_version == 'android13' && inputs.kernel_version == '5.15' && inputs.sublevel == '180' }}
       run: |
         set -e
         KSRC="${{ github.workspace }}/kernel/common"
@@ -476,17 +476,13 @@ jobs:
         ls -la "${{ github.workspace }}/rtl8192eu-output/"
 
     - name: Upload rtl8192eu.ko
+      if: ${{ inputs.android_version == 'android13' && inputs.kernel_version == '5.15' && inputs.sublevel == '180' }}
       uses: actions/upload-artifact@v7
       with:
         name: rtl8192eu-android13-5.15
         path: ${{ github.workspace }}/rtl8192eu-output/
         if-no-files-found: error
         compression-level: 9
-
-    - name: Build rtl8192eu Module
-      if: ${{ inputs.version == 'android13-5.15' }}
-      run: |
-        set -e
 
     - name: Build Bypass Kernel
       if: ${{ inputs.build_bypass }}
