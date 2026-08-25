@@ -471,10 +471,15 @@ jobs:
         cp "${KOUT}/Module.symvers" "${{ github.workspace }}/rtl8192eu-linux/"
 
         # Compile the driver against the newly built GKI kernel
-                # Patch driver Makefile to suppress uninitialized warnings
-        # (this driver predates strict clang -Werror enforcement)
-        sed -i '1s/^/ccflags-y += -Wno-sometimes-uninitialized -Wno-uninitialized\n/' \
-          "${{ github.workspace }}/rtl8192eu-linux/Makefile"
+        # Fix uninitialized variables directly in source (compiler-suggested fixes)
+        sed -i 's/u32 key_type;/u32 key_type = 0;/' \
+          "${{ github.workspace }}/rtl8192eu-linux/core/rtw_debug.c"
+
+        sed -i 's/u16\s*BA_starting_seqctrl;/u16 BA_starting_seqctrl = 0;/g' \
+          "${{ github.workspace }}/rtl8192eu-linux/core/rtw_mlme_ext.c"
+
+        sed -i 's/u8 back_ch, back_bw, back_ch_offset;/u8 back_ch = 0, back_bw = 0, back_ch_offset = 0;/g' \
+          "${{ github.workspace }}/rtl8192eu-linux/core/rtw_mlme_ext.c"
 
         make \
           -C "${KSRC}" \
