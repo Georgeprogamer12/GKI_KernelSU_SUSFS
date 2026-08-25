@@ -479,8 +479,7 @@ jobs:
           LLVM=1 \
           LLVM_IAS=1 \
           CONFIG_RTL8192EU=m \
-          USER_EXTRA_CFLAGS="-Wno-error -Wno-sometimes-uninitialized -Wno-uninitialized" \
-          KCFLAGS="-Wno-error -Wno-sometimes-uninitialized -Wno-uninitialized" \
+          EXTRA_CFLAGS="-Wno-sometimes-uninitialized -Wno-uninitialized" \
           M="${{ github.workspace }}/rtl8192eu-linux" \
           modules
           
