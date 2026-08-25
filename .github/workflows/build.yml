@@ -476,6 +476,11 @@ jobs:
         git clone https://github.com/clnhub/rtl8192eu-linux \
           "${{ github.workspace }}/rtl8192eu-linux"
 
+        # Apply sed patches to zero-initialize variables causing the Clang errors
+        echo "=== Patching rtw_mlme_ext.c uninitialized variables ==="
+        sed -i 's/u16\tBA_starting_seqctrl;/u16\tBA_starting_seqctrl = 0;/' "${{ github.workspace }}/rtl8192eu-linux/core/rtw_mlme_ext.c"
+        sed -i 's/u8 back_ch, back_bw, back_ch_offset;/u8 back_ch = 0, back_bw = 0, back_ch_offset = 0;/' "${{ github.workspace }}/rtl8192eu-linux/core/rtw_mlme_ext.c"
+
         cp "${KOUT}/Module.symvers" "${{ github.workspace }}/rtl8192eu-linux/"
 
         make \
@@ -487,7 +492,7 @@ jobs:
           LLVM_IAS=1 \
           CONFIG_RTL8192EU=m \
           KCFLAGS="-Wno-error -Wno-sometimes-uninitialized -Wno-uninitialized" \
-          EXTRA_CFLAGS="-Wno-error -Wno-sometimes-uninitialized -Wno-uninitialized" \
+          USER_EXTRA_CFLAGS="-Wno-error -Wno-sometimes-uninitialized -Wno-uninitialized" \
           M="${{ github.workspace }}/rtl8192eu-linux" \
           modules
           
