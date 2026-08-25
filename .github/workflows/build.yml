@@ -471,6 +471,11 @@ jobs:
         cp "${KOUT}/Module.symvers" "${{ github.workspace }}/rtl8192eu-linux/"
 
         # Compile the driver against the newly built GKI kernel
+                # Patch driver Makefile to suppress uninitialized warnings
+        # (this driver predates strict clang -Werror enforcement)
+        sed -i '1s/^/ccflags-y += -Wno-sometimes-uninitialized -Wno-uninitialized\n/' \
+          "${{ github.workspace }}/rtl8192eu-linux/Makefile"
+
         make \
           -C "${KSRC}" \
           O="${KOUT}" \
@@ -479,7 +484,6 @@ jobs:
           LLVM=1 \
           LLVM_IAS=1 \
           CONFIG_RTL8192EU=m \
-          EXTRA_CFLAGS="-Wno-sometimes-uninitialized -Wno-uninitialized" \
           M="${{ github.workspace }}/rtl8192eu-linux" \
           modules
           
