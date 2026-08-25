@@ -478,6 +478,10 @@ jobs:
 
         cp "${KOUT}/Module.symvers" "${{ github.workspace }}/rtl8192eu-linux/"
 
+        # Fix uninitialized variable in rtw_debug.c (clang -Werror)
+        sed -i 's/u32 key_type;/u32 key_type = 0;/' \
+          "${{ github.workspace }}/rtl8192eu-linux/core/rtw_debug.c"
+
         make \
           -C "${KSRC}" \
           O="${KOUT}" \
