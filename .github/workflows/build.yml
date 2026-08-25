@@ -447,13 +447,13 @@ jobs:
         KSRC="${{ github.workspace }}/kernel/common"
         KOUT="/home/runner/out/common"
 
-        # Install clang-14 — same major version as r450784e (14.0.7) used to build the kernel
+        # Install build tools
         echo "=== Installing build tools ==="
         sudo apt-get update -qq
         sudo apt-get install -y clang-14 lld-14 llvm-14 \
           gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
 
-        # Wire up generic names so LLVM=1 make flags resolve correctly
+        # Set up symlinks for LLVM
         sudo ln -sf /usr/bin/clang-14        /usr/local/bin/clang
         sudo ln -sf /usr/bin/clang++-14      /usr/local/bin/clang++
         sudo ln -sf /usr/bin/ld.lld-14       /usr/local/bin/ld.lld
@@ -463,26 +463,14 @@ jobs:
         sudo ln -sf /usr/bin/llvm-objdump-14 /usr/local/bin/llvm-objdump
         sudo ln -sf /usr/bin/llvm-strip-14   /usr/local/bin/llvm-strip
 
-        echo "=== Clang version ==="
-        clang --version
-
-        # Sanity check
-        if [ ! -f "${KOUT}/Module.symvers" ]; then
-          echo "Module.symvers not found, searching..."
-          find /home/runner/out -name "Module.symvers" 2>/dev/null | head -5
-          exit 1
-        fi
-
-        git clone https://github.com/clnhub/rtl8192eu-linux \
+        # Clone YOUR fixed driver repository fork
+        git clone https://github.com/Georgeprogamer12/rtl8192eu-linux \
           "${{ github.workspace }}/rtl8192eu-linux"
 
-        # Apply sed patches to zero-initialize variables causing the Clang errors
-        echo "=== Patching rtw_mlme_ext.c uninitialized variables ==="
-        sed -i 's/u16\tBA_starting_seqctrl;/u16\tBA_starting_seqctrl = 0;/' "${{ github.workspace }}/rtl8192eu-linux/core/rtw_mlme_ext.c"
-        sed -i 's/u8 back_ch, back_bw, back_ch_offset;/u8 back_ch = 0, back_bw = 0, back_ch_offset = 0;/' "${{ github.workspace }}/rtl8192eu-linux/core/rtw_mlme_ext.c"
-
+        # Copy the kernel symbols generated from the main kernel build
         cp "${KOUT}/Module.symvers" "${{ github.workspace }}/rtl8192eu-linux/"
 
+        # Compile the driver against the newly built GKI kernel
         make \
           -C "${KSRC}" \
           O="${KOUT}" \
@@ -491,8 +479,8 @@ jobs:
           LLVM=1 \
           LLVM_IAS=1 \
           CONFIG_RTL8192EU=m \
-          KCFLAGS="-Wno-error -Wno-sometimes-uninitialized -Wno-uninitialized" \
           USER_EXTRA_CFLAGS="-Wno-error -Wno-sometimes-uninitialized -Wno-uninitialized" \
+          KCFLAGS="-Wno-error -Wno-sometimes-uninitialized -Wno-uninitialized" \
           M="${{ github.workspace }}/rtl8192eu-linux" \
           modules
           
@@ -502,6 +490,7 @@ jobs:
 
         echo "--- Built modules ---"
         ls -la "${{ github.workspace }}/rtl8192eu-output/"
+        
     - name: Upload rtl8192eu.ko
       if: ${{ inputs.android_version == 'android13' && inputs.kernel_version == '5.15' && inputs.sublevel == '180' }}
       uses: actions/upload-artifact@v7
