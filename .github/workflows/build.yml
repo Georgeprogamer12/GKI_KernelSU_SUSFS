@@ -447,32 +447,23 @@ jobs:
         KSRC="${{ github.workspace }}/kernel/common"
         KOUT="/home/runner/out/common"
 
-        # Find clang used to build the kernel (r450784e)
-        echo "=== Locating clang ==="
-        CLANG_BIN=""
-        for candidate in \
-          "${{ github.workspace }}/kernel/prebuilts-master/ndk/prebuilts/clang/host/linux-x86/clang-r450784e/bin" \
-          "/home/runner/clang-r450784e/bin" \
-          "${{ github.workspace }}/clang-r450784e/bin"; do
-          if [ -f "${candidate}/clang" ]; then
-            CLANG_BIN="$candidate"
-            break
-          fi
-        done
+        # Install clang-14 — same major version as r450784e (14.0.7) used to build the kernel
+        echo "=== Installing build tools ==="
+        sudo apt-get update -qq
+        sudo apt-get install -y clang-14 lld-14 llvm-14 \
+          gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
 
-        if [ -z "$CLANG_BIN" ]; then
-          echo "Hardcoded paths failed, searching..."
-          CLANG_BIN=$(find /home/runner -maxdepth 10 -name "clang" -type f 2>/dev/null \
-            | head -1 | xargs -r dirname)
-          
-          # Fallback to system clang if nothing found
-          if [ -z "$CLANG_BIN" ] && command -v clang &>/dev/null; then
-            CLANG_BIN=$(dirname $(which clang))
-          fi
-        fi
+        # Wire up generic names so LLVM=1 make flags resolve correctly
+        sudo ln -sf /usr/bin/clang-14        /usr/local/bin/clang
+        sudo ln -sf /usr/bin/clang++-14      /usr/local/bin/clang++
+        sudo ln -sf /usr/bin/ld.lld-14       /usr/local/bin/ld.lld
+        sudo ln -sf /usr/bin/llvm-ar-14      /usr/local/bin/llvm-ar
+        sudo ln -sf /usr/bin/llvm-nm-14      /usr/local/bin/llvm-nm
+        sudo ln -sf /usr/bin/llvm-objcopy-14 /usr/local/bin/llvm-objcopy
+        sudo ln -sf /usr/bin/llvm-objdump-14 /usr/local/bin/llvm-objdump
+        sudo ln -sf /usr/bin/llvm-strip-14   /usr/local/bin/llvm-strip
 
-        echo "Found clang at: $CLANG_BIN"
-        export PATH="${CLANG_BIN}:${PATH}"
+        echo "=== Clang version ==="
         clang --version
 
         # Sanity check
